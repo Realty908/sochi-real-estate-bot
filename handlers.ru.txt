@@ -1,0 +1,26 @@
+import logging
+    await update.message.reply_text(
+        f"❤️ *Избранное* — {len(favorites)} объект(ов)\n\n"
+        "Нажмите ❌ чтобы удалить из избранного:",
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=keyboards.favorites_keyboard(favorites),
+    )
+
+
+async def show_favorites_cb(update: Update, context: ContextTypes.DEFAULT_TYPE, page: int = 0):
+    query = update.callback_query
+    user_id = query.from_user.id
+    favorites = await get_favorites(user_id)
+    if not favorites:
+        await query.edit_message_text(
+            "❤️ Избранных объектов нет.\nДобавляйте через кнопку ⭐",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔄 Новый поиск", callback_data="new_search")]
+            ]),
+        )
+        return
+    await query.edit_message_text(
+        f"❤️ *Избранное* — {len(favorites)} объект(ов)\n\nНажмите ❌ чтобы удалить:",
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=keyboards.favorites_keyboard(favorites, page=page),
+    )

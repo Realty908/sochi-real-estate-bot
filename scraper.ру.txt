@@ -1,0 +1,25 @@
+import aiohttp
+    microdistricts = ud.get("microdistricts", [])
+
+    # Single microdistrict or none — simple search
+    if len(microdistricts) <= 1:
+        return await _search_single(ud)
+
+    # Multiple microdistricts — search each separately, then distribute evenly
+    PER_MICRODISTRICT = 5
+
+    async def search_for_md(md: str) -> list:
+        ud_copy = {**ud, "microdistricts": [md]}
+        results = await _search_single(ud_copy)
+        return results[:PER_MICRODISTRICT]
+
+    buckets = await asyncio.gather(*[search_for_md(md) for md in microdistricts])
+
+    # Interleave: one listing from each microdistrict in round-robin order
+    combined = []
+    max_len = max((len(b) for b in buckets), default=0)
+    for i in range(max_len):
+        for bucket in buckets:
+            if i < len(bucket):
+                combined.append(bucket[i])
+    return combined

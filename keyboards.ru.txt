@@ -1,0 +1,40 @@
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
+        InlineKeyboardButton("❤️ Избранное", callback_data="show_favorites"),
+    ])
+    return InlineKeyboardMarkup(buttons)
+
+
+def favorites_keyboard(favorites: list, page: int = 0, per_page: int = 5):
+    total = len(favorites)
+    start = page * per_page
+    end = min(start + per_page, total)
+
+    buttons = []
+    for fav in favorites[start:end]:
+        fav_id = fav["id"]
+        title = fav["title"][:32] + "…" if len(fav["title"]) > 32 else fav["title"]
+        source = fav.get("source", "")
+        buttons.append([
+            InlineKeyboardButton(f"❌ [{source}] {title}", callback_data=f"del_fav:{fav_id}"),
+        ])
+        if fav.get("url"):
+            buttons.append([InlineKeyboardButton("🔗 Открыть", url=fav["url"])])
+
+    nav = []
+    if page > 0:
+        nav.append(InlineKeyboardButton("◀ Назад", callback_data=f"fav_page:{page - 1}"))
+    nav.append(InlineKeyboardButton(f"{page + 1} / {max(1, (total + per_page - 1) // per_page)}", callback_data="noop"))
+    if end < total:
+        nav.append(InlineKeyboardButton("Далее ▶", callback_data=f"fav_page:{page + 1}"))
+    if nav:
+        buttons.append(nav)
+
+    buttons.append([InlineKeyboardButton("🔄 Новый поиск", callback_data="new_search")])
+    return InlineKeyboardMarkup(buttons)
+
+
+def main_menu_keyboard():
+    return ReplyKeyboardMarkup(
+        [[KeyboardButton("🔍 Новый поиск")], [KeyboardButton("❤️ Избранное")]],
+        resize_keyboard=True,
+    )
